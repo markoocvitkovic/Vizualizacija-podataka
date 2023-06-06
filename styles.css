@@ -1,0 +1,103 @@
+body {
+    margin: 0;
+  }
+  
+  #container {
+    display: flex;
+    width: 800px;
+    height: 700px;
+  }
+  
+  h1 {
+    margin-bottom: 20px;
+    color: #fafafa;
+    text-align: center;
+    font-family: "Arial", sans-serif;
+    background-color: #eb0707;
+    padding: 10px;
+  }
+  
+  .controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    font-size: 25px;
+    color: #555;
+  }
+  
+  .controls h2 {
+    font-size: 50px;
+    margin-bottom: 10px;
+  }
+  
+  .controls button {
+    margin: 5px 10px; /* Pomaknuto 10px od labela */
+    padding: 8px 18px;
+    font-size: 18px;
+    background-color: #eee;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .controls button:hover {
+    background-color: #ddd;
+  }
+  
+  .controls input[type="range"] {
+    width: 200px;
+    margin: 10px 0;
+  }
+  
+  .controls select {
+    padding: 5px;
+    font-size: 18px;
+    border-radius: 5px;
+  }
+  
+  .controls .checkbox-container {
+    margin: 10px 0;
+  }
+  
+  .controls label {
+    font-size: 25px;
+    font-family: "Lucida Console", "Courier New", monospace;
+    margin-right: 10px; /* Pomaknuto 10px od checkboxa */
+  }
+  
+  .controls input[type="checkbox"] {
+    margin-right: 5px;
+  }
+  
+  #map {
+    float: left;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 10px;
+  }
+  
+  #info {
+    font-family: "Lucida Console", "Courier New", monospace;
+    font-size: 20px;
+    margin-left: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 10px;
+  }
+  
+  #lineChartCanvas,
+  #lineChartCanvas2 {
+    height: 400px;
+    width: 800px;
+  }
+  
+  svg {
+    background-color: rgb(241, 219, 219);
+    border: 1px solid #e0dbdb;
+    border-radius: 5px;
+    padding: 10px;
+  }
+  .active {
+    fill: #020202;
+}

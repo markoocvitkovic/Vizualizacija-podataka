@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+    <script src="https://d3js.org/topojson.v1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>COVID-19-HRVATSKA</title>
+    <link rel="stylesheet" type="text/css" href="styles.css">
+    <style>
+        .no-zoom {
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>COVID-19-HRVATSKA</h1>
+        <div class="controls">
+            <label for="year">Odaberi godinu:</label>
+            <select id="year" onchange="loadData()">
+                <option value="2020">2020</option>
+                <option value="2021">2021</option>
+                <option value="2022">2022</option>
+            </select>
+        </div>
+        <div class="content">
+            <div id="map"></div>
+            <div id="info"></div>
+        </div>
+        <div id="lineChartContainer">
+            <canvas id="lineChartCanvas"></canvas>
+            
+            <canvas id="lineChartCanvas2"></canvas>
+       
+        </div>
+     
+    </div>
+    <script>
+        var width = 960;
+        var height = 700;
+
+        var skala = d3.scale.linear()
+            .domain([50000, 800000])
+            .range([0, 6]);
+
+        var colors = ["#26ff00", "#30d413", "#35b51f", "#369925", "#368729", "#35702c", "#2f5c28"];
+
+        var projection = d3.geo.mercator()
+            .center([0, 10])
+            .scale(6000)
+            .translate([17600, 4500])
+            .rotate([-180, 0]);
+
+        var path = d3.geo.path()
+            .projection(projection);
+
+        var svg = d3.select("#map").append("svg")
+            .attr("width", width)
+            .attr("height", height)
+            .style("background", "white");
+
+        d3.select("#map")
+            .append("div")
+            .attr("id", "name");
+
+        d3.select("#map")
+            .append("div")
+            .attr("id", "info");
+
+        var g = svg.append("g");
+
+        function loadData() {
+            var selectedYear = document.getElementById("year").value;
+            var jsonFile = `covid__${selectedYear}.json`;
+
+            d3.json(jsonFile, function(error, data) {
+                if (error) {
+                    console.error("Greška prilikom učitavanja JSON podataka.");
+                    return;
+                }
+
+                var features = topojson.feature(data, data.objects.layer1).features;
+
+                var colorScale = d3.scale.linear()
+                    .domain([0, 80000])
+                    .range(["#FFCCCC", "#FF0000"]); 
+
+                var states = g.selectAll("path.county")
+                    .data(features)
+                    .enter()
+                    .append("path")
+                    .attr("class", "county")
+                    .attr("id", function(d) { return d.id; })
+                    .attr("d", path)
+                    .style("fill", function(d) {
+                        var value = Math.round(skala(d.properties.population));
+                        var zarazeni = d.properties.broj_zarazenih;
+                        return colorScale(zarazeni);
+                    })
+                    .style("stroke", "gray")
+                    .style("stroke-width", 1)
+                    .style("stroke-opacity", 1)
+                    .on("mouseover", function(d) { 
+                    var currentColor = d3.select(this).style("fill");
+                    d3.select(this)
+                    .style("fill", "white")
+                     .attr("data-current-color", currentColor);
+                     })
+                    .on("mouseout", function(d) { 
+                    var currentColor = d3.select(this).attr("data-current-color");
+                    d3.select(this)
+                    .style("fill", currentColor);
+                    })
+                    .on("click", onClick);
+
+               
+                var ctx = document.getElementById("lineChartCanvas").getContext("2d");
+                var lineData = {
+                    labels: ["sijecanj", "veljaca", "ozujak", "travanj", "svibanj", "lipanj", "srpanj", "kolovoz", "rujan", "listopad", "studeni", "prosinac"],
+                    datasets: []
+                };
+
+                var lineOptions = {
+                    responsive: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Broj zaraženih'
+                            }
+                        }
+                    }
+                };
+
+                var lineChart = new Chart(ctx, {
+                    type: "line",
+                    data: lineData,
+                    options: lineOptions
+                });
+
+          
+                var ctx2 = document.getElementById("lineChartCanvas2").getContext("2d");
+                var lineData2 = {
+                    labels: ["sijecanj", "veljaca", "ozujak", "travanj", "svibanj", "lipanj", "srpanj", "kolovoz", "rujan", "listopad", "studeni", "prosinac"],
+                    datasets: []
+                };
+
+                var lineOptions2 = {
+                    responsive: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Broj aktivnih'
+                            }
+                        }
+                    }
+                };
+
+                var lineChart2 = new Chart(ctx2, {
+                    type: "line",
+                    data: lineData2,
+                    options: lineOptions2
+                });
+
+                function onClick(d) {
+                    var a, b, c;
+
+                    var centroid = path.centroid(d);
+                    a = centroid[0];
+                    b = centroid[1];
+                    c = 4;
+                    centered = d;
+
+                    g.selectAll("path")
+                        .classed("active", centered && function(d) { return d === centered; });
+
+                    d3.select("#info").html(`Zupanija: ${d.properties.name} <br/> Broj aktivnih: ${d.properties.broj_aktivni} <br/> Broj umrlih: ${d.properties.broj_umrlih}  <br/> Broj zarazenih: ${d.properties.broj_zarazenih}`);
+
+                    lineData.datasets = [];
+                    lineData2.datasets = [];
+
+                    var zarazeniPoMjesecima = [
+                        d.properties.sijecanj,
+                        d.properties.veljaca,
+                        d.properties.ozujak,
+                        d.properties.travanj,
+                        d.properties.svibanj,
+                        d.properties.lipanj,
+                        d.properties.srpanj,
+                        d.properties.kolovoz,
+                        d.properties.rujan,
+                        d.properties.listopad,
+                        d.properties.studeni,
+                        d.properties.prosinac
+                    ];
+                    var zarazeniPoMjesecima1 = [
+                        d.properties.sijecanj1,
+                        d.properties.veljaca2,
+                        d.properties.ozujak3,
+                        d.properties.travanj4,
+                        d.properties.svibanj5,
+                        d.properties.lipanj6,
+                        d.properties.srpanj7,
+                        d.properties.kolovoz8,
+                        d.properties.rujan9,
+                        d.properties.listopad1,
+                        d.properties.studeni1,
+                        d.properties.prosinac2
+                    ];
+
+                    var dataset = {
+                        label: d.properties.name,
+                        data: zarazeniPoMjesecima,
+                        borderColor: colors[Math.round(skala(d.properties.population))],
+                        fill: false
+                    };
+
+                    var dataset2 = {
+                        label: d.properties.name,
+                        data: zarazeniPoMjesecima1,
+                        borderColor: colors[Math.round(skala(d.properties.population))],
+                        fill: false
+                    };
+
+                    lineData.datasets.push(dataset);
+                    lineData2.datasets.push(dataset2);
+
+                    lineChart.update();
+                    lineChart2.update();
+                }
+            });
+        }
+
+        loadData();
+    </script>
+</body>
+</html> 
